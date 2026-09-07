@@ -35,11 +35,9 @@ export default {
 		}
 
 		if (url.pathname === "/") {
-			const state = crypto.randomUUID();
 			url.searchParams.set("redirect_uri", url.origin + "/dashboard");
 			url.searchParams.set("client_id", "your-client-id");
 			url.searchParams.set("response_type", "code");
-			url.searchParams.set("state", state);
 			url.pathname = "/authorize";
 			return Response.redirect(url.toString());
 		}
@@ -80,7 +78,10 @@ export default {
 			},
 			success: async (ctx, value) => {
 				const userId = await getOrCreateUser(env, value.email);
-				return ctx.subject("user", { id: userId });
+				return Response.redirect(
+					`/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`,
+					302
+				);
 			},
 		}).fetch(request, env, ctx);
 	},
