@@ -41,7 +41,7 @@ export function DashboardHTML(userId: string, email: string) {
           <h1>Dashboard READTalk</h1>
           <div class="info"><span class="label">User ID:</span> ${userId}</div>
           <div class="info"><span class="label">Email:</span> ${email}</div>
-          <form action="/logout" method="post">
+          <form action="/" method="post">
             <button type="submit" class="logout-btn">Logout</button>
           </form>
         </div>
