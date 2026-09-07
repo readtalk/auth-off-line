@@ -21,6 +21,11 @@
 				justify-content: center;
 				margin: 0;
 				overflow: hidden;
+				transition: opacity 0.8s ease;
+			}
+
+			body.fade-out {
+				opacity: 0;
 			}
 
 			.loader {
@@ -32,7 +37,7 @@
 			.logo {
 				width: 120px;
 				height: 120px;
-				margin: 0 auto 24px auto;
+				margin: 0 auto 20px auto;
 				background: #ff0000;
 				border-radius: 24px;
 				display: flex;
@@ -40,6 +45,13 @@
 				justify-content: center;
 				box-shadow: 0 8px 32px rgba(255, 0, 0, 0.25);
 				animation: pulse 2.4s ease-in-out infinite;
+				overflow: hidden;
+			}
+
+			.logo img {
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
 			}
 
 			.logo span {
@@ -54,7 +66,7 @@
 				font-weight: 600;
 				letter-spacing: -0.5px;
 				color: #111b21;
-				margin-bottom: 6px;
+				margin-bottom: 2px;
 			}
 
 			.loader h1 b {
@@ -62,19 +74,26 @@
 				font-weight: 700;
 			}
 
-			.loader p {
+			.typing {
 				font-size: 1.4rem;
 				color: #667781;
 				font-weight: 400;
+				min-height: 2.4rem;
 			}
 
-			.loader .dot {
+			.typing .cursor {
 				display: inline-block;
-				animation: dotBounce 1.4s ease-in-out infinite;
+				width: 2px;
+				height: 1.2em;
+				background: #ff0000;
+				margin-left: 2px;
+				vertical-align: text-bottom;
+				animation: blink 0.8s step-end infinite;
 			}
 
-			.loader .dot:nth-child(2) { animation-delay: 0.2s; }
-			.loader .dot:nth-child(3) { animation-delay: 0.4s; }
+			.typing .cursor.hidden {
+				opacity: 0;
+			}
 
 			@keyframes fadeIn {
 				0% { opacity: 0; transform: scale(0.96); }
@@ -86,33 +105,91 @@
 				50% { transform: scale(1.03); box-shadow: 0 12px 48px rgba(255, 0, 0, 0.35); }
 			}
 
-			@keyframes dotBounce {
-				0%, 80%, 100% { opacity: 0.2; transform: translateY(0); }
-				40% { opacity: 1; transform: translateY(-6px); }
+			@keyframes blink {
+				0%, 100% { opacity: 1; }
+				50% { opacity: 0; }
 			}
 		</style>
 	</head>
 	<body>
 		<div class="loader" id="loader">
-			<div class="logo">
+			<div class="logo" id="logo">
 				<span>RT</span>
 			</div>
 			<h1><b>READ</b>Talk</h1>
-			<p>
-				Loading<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
-			</p>
+			<div class="typing" id="typing">
+				<span id="typewriter"></span><span class="cursor" id="cursor"></span>
+			</div>
 		</div>
 
 		<script>
 			(function() {
-				const target = '/password/authorize';
-				const delay = 3800;
+				const messages = [
+					"Secure messaging",
+					"Fast & reliable",
+					"Your privacy matters",
+					"Welcome to READTalk"
+				];
 
-				setTimeout(function() {
-					const base = window.location.origin;
-					const url = base + target;
-					window.location.href = url;
-				}, delay);
+				let msgIndex = 0;
+				let charIndex = 0;
+				let isDeleting = false;
+				const typewriter = document.getElementById('typewriter');
+				const cursor = document.getElementById('cursor');
+				const loader = document.getElementById('loader');
+				const body = document.body;
+
+				function typeEffect() {
+					const currentMsg = messages[msgIndex];
+					const speed = isDeleting ? 40 : 80;
+
+					if (!isDeleting && charIndex < currentMsg.length) {
+						typewriter.textContent += currentMsg.charAt(charIndex);
+						charIndex++;
+						setTimeout(typeEffect, speed);
+					} else if (isDeleting && charIndex > 0) {
+						typewriter.textContent = currentMsg.substring(0, charIndex - 1);
+						charIndex--;
+						setTimeout(typeEffect, speed);
+					} else {
+						if (!isDeleting) {
+							setTimeout(() => {
+								isDeleting = true;
+								setTimeout(typeEffect, 300);
+							}, 2000);
+						} else {
+							isDeleting = false;
+							msgIndex = (msgIndex + 1) % messages.length;
+							charIndex = 0;
+							setTimeout(typeEffect, 400);
+						}
+					}
+				}
+
+				setTimeout(() => {
+					typeEffect();
+				}, 400);
+
+				const totalDelay = 4800;
+
+				setTimeout(() => {
+					cursor.classList.add('hidden');
+					body.classList.add('fade-out');
+
+					setTimeout(() => {
+						const base = window.location.origin;
+						window.location.href = base + '/password/authorize';
+					}, 800);
+				}, totalDelay);
+
+				const logo = document.getElementById('logo');
+				const brandUrl = 'https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/brand.png';
+				fetch(brandUrl, { mode: 'no-cors' })
+					.then(() => {
+						logo.innerHTML = `<img src="${brandUrl}" alt="READTalk" />`;
+					})
+					.catch(() => {
+					});
 			})();
 		</script>
 	</body>
