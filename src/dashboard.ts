@@ -1,4 +1,4 @@
-export function DashboardHTML(userId: string, email: string) {
+export function DashboardHTML(email: string, userId: string) {
 	return `
     <!DOCTYPE html>
     <html>
