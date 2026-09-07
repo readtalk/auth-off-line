@@ -15,17 +15,15 @@
 		"valibot": "1.2.0"
 	},
 	"devDependencies": {
-		"esbuild": "^0.24.0",
 		"typescript": "5.9.3",
 		"wrangler": "4.127.0"
 	},
 	"private": true,
 	"scripts": {
-		"build": "esbuild src/client/index.tsx --bundle --format=esm --platform=browser --outdir=public/dist",
 		"cf-typegen": "wrangler types",
 		"check": "tsc && wrangler deploy --dry-run",
-		"deploy": "npm run build && wrangler deploy",
-		"dev": "npm run build && wrangler dev",
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
 		"predeploy": "wrangler d1 migrations apply AUTH_DB --remote"
 	}
 }
