@@ -13,8 +13,8 @@
 
 			body {
 				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-				background: #0b141a;
-				color: #e9edef;
+				background: #ffffff;
+				color: #111b21;
 				height: 100vh;
 				display: flex;
 				align-items: center;
@@ -26,28 +26,46 @@
 			.loader {
 				text-align: center;
 				opacity: 0;
-				animation: fadeIn 1.2s ease-in-out forwards;
+				animation: fadeIn 1.4s ease-in-out forwards;
 			}
 
-			.loader svg {
-				width: 64px;
-				height: 64px;
-				margin-bottom: 20px;
-				animation: pulse 1.8s ease-in-out infinite;
+			.logo {
+				width: 120px;
+				height: 120px;
+				margin: 0 auto 24px auto;
+				background: #ff0000;
+				border-radius: 24px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				box-shadow: 0 8px 32px rgba(255, 0, 0, 0.25);
+				animation: pulse 2.4s ease-in-out infinite;
+			}
+
+			.logo span {
+				font-size: 48px;
+				font-weight: 700;
+				color: #ffffff;
+				letter-spacing: -2px;
 			}
 
 			.loader h1 {
-				font-size: 2.4rem;
+				font-size: 2.8rem;
 				font-weight: 600;
 				letter-spacing: -0.5px;
+				color: #111b21;
+				margin-bottom: 6px;
+			}
+
+			.loader h1 b {
 				color: #ff0000;
-				margin-bottom: 8px;
+				font-weight: 700;
 			}
 
 			.loader p {
 				font-size: 1.4rem;
-				color: #8696a0;
-				font-weight: 300;
+				color: #667781;
+				font-weight: 400;
 			}
 
 			.loader .dot {
@@ -64,8 +82,8 @@
 			}
 
 			@keyframes pulse {
-				0%, 100% { opacity: 0.6; transform: scale(1); }
-				50% { opacity: 1; transform: scale(1.05); }
+				0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(255, 0, 0, 0.25); }
+				50% { transform: scale(1.03); box-shadow: 0 12px 48px rgba(255, 0, 0, 0.35); }
 			}
 
 			@keyframes dotBounce {
@@ -76,12 +94,10 @@
 	</head>
 	<body>
 		<div class="loader" id="loader">
-			<svg viewBox="0 0 24 24" fill="none" stroke="#ff0000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M12 2L2 7l10 5 10-5-10-5z" />
-				<path d="M2 17l10 5 10-5" />
-				<path d="M2 12l10 5 10-5" />
-			</svg>
-			<h1>READTalk</h1>
+			<div class="logo">
+				<span>RT</span>
+			</div>
+			<h1><b>READ</b>Talk</h1>
 			<p>
 				Loading<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
 			</p>
@@ -90,7 +106,7 @@
 		<script>
 			(function() {
 				const target = '/password/authorize';
-				const delay = 1200;
+				const delay = 3800;
 
 				setTimeout(function() {
 					const base = window.location.origin;
