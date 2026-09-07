@@ -7,7 +7,7 @@ import { PasswordProvider } from "@openauthjs/openauth/provider/password";
 import { PasswordUI } from "@openauthjs/openauth/ui/password";
 import { createSubjects } from "@openauthjs/openauth/subject";
 import { object, string } from "valibot";
-import { DashboardHTML } from "./dashboard";
+import { DashboardHandler } from "./dashboard";
 
 const subjects = createSubjects({
 	user: object({
@@ -20,28 +20,10 @@ export default {
 		const url = new URL(request.url);
 
 		if (url.pathname === "/dashboard") {
-			const sessionId = request.headers.get("Cookie")?.match(/session_id=([^;]+)/)?.[1];
-			if (!sessionId) {
-				return Response.redirect("/");
-			}
-
-			const sessionData = await env.AUTH_KV.get(`session:${sessionId}`, "json");
-			if (!sessionData) {
-				return Response.redirect("/");
-			}
-
-			const { userId, email } = sessionData;
-			const html = DashboardHTML(userId, email);
-			return new Response(html, {
-				headers: { "Content-Type": "text/html" },
-			});
+			return DashboardHandler(request, env);
 		}
 
 		if (url.pathname === "/logout") {
-			const sessionId = request.headers.get("Cookie")?.match(/session_id=([^;]+)/)?.[1];
-			if (sessionId) {
-				await env.AUTH_KV.delete(`session:${sessionId}`);
-			}
 			const response = Response.redirect("/");
 			response.headers.set("Set-Cookie", "session_id=; Max-Age=0; path=/");
 			return response;
@@ -91,19 +73,6 @@ export default {
 			},
 			success: async (ctx, value) => {
 				const userId = await getOrCreateUser(env, value.email);
-				const sessionId = crypto.randomUUID();
-				await env.AUTH_KV.put(`session:${sessionId}`, JSON.stringify({
-					userId,
-					email: value.email,
-				}), { expirationTtl: 3600 });
-
-				ctx.cookie.set("session_id", sessionId, {
-					httpOnly: true,
-					secure: true,
-					path: "/",
-					maxAge: 3600,
-				});
-
 				return ctx.subject("user", { id: userId });
 			},
 		}).fetch(request, env, ctx);
