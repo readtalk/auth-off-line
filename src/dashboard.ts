@@ -1,4 +1,3 @@
-//
 export function DashboardHTML(userId: string, email: string) {
   return `
     <!doctype html>
@@ -35,17 +34,50 @@ export function DashboardHTML(userId: string, email: string) {
             margin-top: 20px;
           }
           .logout-btn:hover { background: #e60000; }
+          #loading { text-align: center; margin-top: 40px; }
         </style>
       </head>
       <body>
-        <div class="card">
-          <h1>Dashboard READTalk</h1>
-          <div class="info"><span class="label">User ID:</span> ${userId}</div>
-          <div class="info"><span class="label">Email:</span> ${email}</div>
-          <form action="/" method="post">
-            <button type="submit" class="logout-btn">Logout</button>
-          </form>
+        <div id="loading">Loading...</div>
+        <div id="dashboard" style="display:none;">
+          <div class="card">
+            <h1>Dashboard READTalk</h1>
+            <div class="info"><span class="label">User ID:</span> <span id="userId">${userId}</span></div>
+            <div class="info"><span class="label">Email:</span> <span id="email">${email}</span></div>
+            <button onclick="logout()" class="logout-btn">Logout</button>
+          </div>
         </div>
+        <script>
+          (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+
+            if (code && state) {
+              localStorage.setItem('auth_code', code);
+              localStorage.setItem('auth_state', state);
+              const cleanUrl = window.location.origin + window.location.pathname;
+              window.history.replaceState({}, document.title, cleanUrl);
+            }
+
+            const savedState = localStorage.getItem('auth_state');
+            const savedCode = localStorage.getItem('auth_code');
+            if (savedState && savedCode) {
+              document.getElementById('userId').textContent = savedState;
+              document.getElementById('email').textContent = 'user@example.com';
+              document.getElementById('loading').style.display = 'none';
+              document.getElementById('dashboard').style.display = 'block';
+            } else {
+              document.getElementById('loading').textContent = 'No session found. Please login.';
+            }
+          })();
+
+          function logout() {
+            localStorage.removeItem('auth_code');
+            localStorage.removeItem('auth_state');
+            window.location.href = '/';
+          }
+        </script>
       </body>
     </html>
   `;
