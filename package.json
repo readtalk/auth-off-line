@@ -1,8 +1,8 @@
 {
 	"name": "global",
-	"description": "Deploy an OpenAuth server on Cloudflare Workers.",
+	"description": "READTalk Messenger on Cloudflare Workers + Durable Object.",
 	"cloudflare": {
-		"label": "OpenAuth Server",
+		"label": "READTalk Messenger",
 		"products": ["Workers", "D1", "KV"],
 		"categories": [],
 		"preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/5764e3ad-0e07-4873-1139-39ba4e6ab200/public",
