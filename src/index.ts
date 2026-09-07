@@ -67,8 +67,8 @@ export default {
 				),
 			},
 			theme: {
-				title: "Authentication",
-				primary: "#FF0000",
+				title: "READTalk Messenger",
+				primary: "#FFFFFF",
 				favicon: "https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/favicon.ico",
 				logo: {
 					dark: "https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/brand.png",
