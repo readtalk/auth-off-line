@@ -19,39 +19,31 @@ export default {
 	fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
 
-		// ---- Route: Dashboard (setelah login) ----
 		if (url.pathname === "/dashboard") {
-			// Ambil userId dan email dari session (contoh: dari header atau cookie)
-			// Untuk demo, kita ambil dari query parameter atau simpan di KV
-			// Cara sederhana: baca dari cookie yang diset oleh OpenAuth
 			const userId = url.searchParams.get("user_id") || "user_123";
 			const email = url.searchParams.get("email") || "user@example.com";
-
 			const html = DashboardHTML(userId, email);
 			return new Response(html, {
 				headers: { "Content-Type": "text/html" },
 			});
 		}
 
-		// ---- Route: Logout ----
 		if (url.pathname === "/logout") {
-			// Hapus session/cookie (redirect ke /)
 			const response = Response.redirect("/");
-			// Hapus cookie jika ada
 			response.headers.set("Set-Cookie", "session=; Max-Age=0; path=/");
 			return response;
 		}
 
-		// ---- Redirect root ke authorize ----
 		if (url.pathname === "/") {
+			const state = crypto.randomUUID();
 			url.searchParams.set("redirect_uri", url.origin + "/dashboard");
 			url.searchParams.set("client_id", "your-client-id");
 			url.searchParams.set("response_type", "code");
+			url.searchParams.set("state", state);
 			url.pathname = "/authorize";
 			return Response.redirect(url.toString());
 		}
 
-		// ---- Callback (dari OpenAuth) ----
 		if (url.pathname === "/callback") {
 			return Response.json({
 				message: "OAuth flow complete!",
@@ -59,7 +51,6 @@ export default {
 			});
 		}
 
-		// ---- OpenAuth Server ----
 		return issuer({
 			storage: CloudflareStorage({
 				namespace: env.AUTH_KV as CloudflareStorageOptions["namespace"],
@@ -89,7 +80,6 @@ export default {
 			},
 			success: async (ctx, value) => {
 				const userId = await getOrCreateUser(env, value.email);
-				// Simpan userId dan email di session (bisa pakai cookie atau KV)
 				return ctx.subject("user", { id: userId });
 			},
 		}).fetch(request, env, ctx);
