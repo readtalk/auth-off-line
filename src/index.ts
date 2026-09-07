@@ -68,7 +68,7 @@ export default {
 			},
 			theme: {
 				title: "READTalk Messenger",
-				primary: "#FFFFFF",
+				primary: "#FF0000",
 				favicon: "https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/favicon.ico",
 				logo: {
 					dark: "https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/brand.png",
