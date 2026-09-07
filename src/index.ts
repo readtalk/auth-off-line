@@ -78,8 +78,9 @@ export default {
 			},
 			success: async (ctx, value) => {
 				const userId = await getOrCreateUser(env, value.email);
+				const baseUrl = "https://global.readtalk.workers.dev";
 				return Response.redirect(
-					`/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`,
+					`${baseUrl}/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`,
 					302
 				);
 			},
