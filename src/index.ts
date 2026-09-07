@@ -34,7 +34,7 @@ export default {
 		}
 
 		// ---- Route: Logout ----
-		if (url.pathname === "/logout") {
+		if (url.pathname === "/") {
 			// Hapus session/cookie (redirect ke /)
 			const response = Response.redirect("/");
 			// Hapus cookie jika ada
