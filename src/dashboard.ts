@@ -50,31 +50,31 @@ export function DashboardHTML(userId: string, email: string) {
         <script>
           (function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get('code');
-            const state = urlParams.get('state');
+            const userId = urlParams.get('user_id');
+            const email = urlParams.get('email');
 
-            if (code && state) {
-              localStorage.setItem('auth_code', code);
-              localStorage.setItem('auth_state', state);
+            if (userId && email) {
+              localStorage.setItem('user_id', userId);
+              localStorage.setItem('email', email);
               const cleanUrl = window.location.origin + window.location.pathname;
               window.history.replaceState({}, document.title, cleanUrl);
             }
 
-            const savedState = localStorage.getItem('auth_state');
-            const savedCode = localStorage.getItem('auth_code');
-            if (savedState && savedCode) {
-              document.getElementById('userId').textContent = savedState;
-              document.getElementById('email').textContent = 'user@example.com';
+            const savedUserId = localStorage.getItem('user_id');
+            const savedEmail = localStorage.getItem('email');
+            if (savedUserId && savedEmail) {
+              document.getElementById('userId').textContent = savedUserId;
+              document.getElementById('email').textContent = savedEmail;
               document.getElementById('loading').style.display = 'none';
               document.getElementById('dashboard').style.display = 'block';
             } else {
-              document.getElementById('loading').textContent = 'No session found. Please login.';
+              document.getElementById('loading').textContent = 'No session found. Please login to https://global.readtalk.workers.dev';
             }
           })();
 
           function logout() {
-            localStorage.removeItem('auth_code');
-            localStorage.removeItem('auth_state');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('email');
             window.location.href = '/';
           }
         </script>
