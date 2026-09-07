@@ -7,7 +7,7 @@ import { PasswordProvider } from "@openauthjs/openauth/provider/password";
 import { PasswordUI } from "@openauthjs/openauth/ui/password";
 import { createSubjects } from "@openauthjs/openauth/subject";
 import { object, string } from "valibot";
-import { DashboardHandler } from "./dashboard";
+import { DashboardHTML } from "./dashboard";
 
 const subjects = createSubjects({
 	user: object({
@@ -19,16 +19,30 @@ export default {
 	fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
 
+		// ---- Route: Dashboard (setelah login) ----
 		if (url.pathname === "/dashboard") {
-			return DashboardHandler(request, env);
+			// Ambil userId dan email dari session (contoh: dari header atau cookie)
+			// Untuk demo, kita ambil dari query parameter atau simpan di KV
+			// Cara sederhana: baca dari cookie yang diset oleh OpenAuth
+			const userId = url.searchParams.get("user_id") || "user_123";
+			const email = url.searchParams.get("email") || "user@example.com";
+
+			const html = DashboardHTML(userId, email);
+			return new Response(html, {
+				headers: { "Content-Type": "text/html" },
+			});
 		}
 
+		// ---- Route: Logout ----
 		if (url.pathname === "/logout") {
+			// Hapus session/cookie (redirect ke /)
 			const response = Response.redirect("/");
-			response.headers.set("Set-Cookie", "session_id=; Max-Age=0; path=/");
+			// Hapus cookie jika ada
+			response.headers.set("Set-Cookie", "session=; Max-Age=0; path=/");
 			return response;
 		}
 
+		// ---- Redirect root ke authorize ----
 		if (url.pathname === "/") {
 			url.searchParams.set("redirect_uri", url.origin + "/dashboard");
 			url.searchParams.set("client_id", "your-client-id");
@@ -37,6 +51,7 @@ export default {
 			return Response.redirect(url.toString());
 		}
 
+		// ---- Callback (dari OpenAuth) ----
 		if (url.pathname === "/callback") {
 			return Response.json({
 				message: "OAuth flow complete!",
@@ -44,6 +59,7 @@ export default {
 			});
 		}
 
+		// ---- OpenAuth Server ----
 		return issuer({
 			storage: CloudflareStorage({
 				namespace: env.AUTH_KV as CloudflareStorageOptions["namespace"],
@@ -73,6 +89,7 @@ export default {
 			},
 			success: async (ctx, value) => {
 				const userId = await getOrCreateUser(env, value.email);
+				// Simpan userId dan email di session (bisa pakai cookie atau KV)
 				return ctx.subject("user", { id: userId });
 			},
 		}).fetch(request, env, ctx);
