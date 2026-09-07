@@ -4,7 +4,7 @@ export function DashboardHTML(userId: string, email: string) {
     <html lang="en">
       <head>
         <meta charset="utf-8" />
-        <title>READTalk</title>
+        <title>READTalk Messenger</title>
         <style>
           body {
             font-family: system-ui, sans-serif;
