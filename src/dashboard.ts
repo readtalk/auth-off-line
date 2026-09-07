@@ -1,3 +1,4 @@
+//
 export function DashboardHTML(userId: string, email: string) {
   return `
     <!doctype html>
