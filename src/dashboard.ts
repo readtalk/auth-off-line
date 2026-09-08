@@ -41,8 +41,9 @@ export function DashboardHTML(userId: string, email: string) {
         <div id="loading">Loading...</div>
         <div id="dashboard" style="display:none;">
           <div class="card">
-            <h1>Dashboard READTalk</h1>
-            <div class="info"><span class="label">User ID:</span> <span id="userId">${userId}</span></div>
+            <h3>Form Username?</h3>
+            <div class="info"><span class="label">Username:</span> <span id="userId">enter here...</span></div>
+            <div class="info"><span class="label">Key ID:</span> <span id="userId">${userId}</span></div>
             <div class="info"><span class="label">Email:</span> <span id="email">${email}</span></div>
             <button onclick="logout()" class="logout-btn">Logout</button>
           </div>
