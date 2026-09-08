@@ -15,7 +15,7 @@ const subjects = createSubjects({
 	}),
 });
 
-export class USER_ID implements DurableObject {
+export class userId implements DurableObject {
 	constructor(private state: DurableObjectState, private env: Env) {}
 
 	async fetch(request: Request): Promise<Response> {
@@ -32,7 +32,7 @@ export class USER_ID implements DurableObject {
 			return Response.json({ success: true });
 		}
 
-		return new Response("USER_ID DO", { status: 200 });
+		return new Response("userId DO", { status: 200 });
 	}
 }
 
