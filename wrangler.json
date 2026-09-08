@@ -24,7 +24,7 @@
 		"bindings": [
 			{
 				"name": "USER_ID",
-				"class_name": "userId"
+				"class_name": "Chat"
 			}
 		]
 	},
