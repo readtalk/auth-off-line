@@ -35,33 +35,6 @@ export function DashboardHTML(userId: string, email: string) {
           }
           .logout-btn:hover { background: #e60000; }
           #loading { text-align: center; margin-top: 40px; }
-          .form-group {
-            margin-bottom: 15px;
-          }
-          .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-          }
-          .form-group input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-          }
-          .save-btn {
-            background: #000000;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-right: 10px;
-          }
-          .save-btn:hover { background: #2f2f2f; }
-          .status { margin-top: 10px; font-weight: 500; }
         </style>
       </head>
       <body>
@@ -71,17 +44,6 @@ export function DashboardHTML(userId: string, email: string) {
             <h4>Form @username?</h4>            
             <div class="info"><span class="label">Key ID:</span> <span id="userId">${userId}</span></div>
             <div class="info"><span class="label">Email:</span> <span id="email">${email}</span></div>
-
-            <div class="form-group">
-              <label for="username">@username</label>
-              <input type="text" id="username" placeholder="Your unique username" />
-            </div>
-
-            <button class="save-btn" id="saveProfileBtn">Save Profile</button>
-            <div id="saveStatus" class="status"></div>
-
-            <hr />
-
             <button onclick="logout()" class="logout-btn">Logout</button>
           </div>
         </div>
@@ -115,53 +77,6 @@ export function DashboardHTML(userId: string, email: string) {
             localStorage.removeItem('email');
             window.location.href = '/';
           }
-
-          document.addEventListener('DOMContentLoaded', function() {
-            const saveBtn = document.getElementById('saveProfileBtn');
-            const statusDiv = document.getElementById('saveStatus');
-
-            if (saveBtn) {
-              saveBtn.addEventListener('click', async function() {
-                const userId = localStorage.getItem('user_id');
-                const email = localStorage.getItem('email');
-                const username = document.getElementById('username').value.trim();
-
-                if (!userId) {
-                  statusDiv.textContent = 'Error: User ID not found.';
-                  statusDiv.style.color = 'red';
-                  return;
-                }
-
-                statusDiv.textContent = 'Saving...';
-                statusDiv.style.color = 'black';
-
-                try {
-                  const response = await fetch('/profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                      userId: userId, 
-                      email: email, 
-                      username: username 
-                    })
-                  });
-
-                  const data = await response.json();
-
-                  if (response.ok && data.success) {
-                    statusDiv.textContent = 'Profile saved successfully!';
-                    statusDiv.style.color = 'green';
-                  } else {
-                    statusDiv.textContent = 'Error: ' + (data.message || 'Failed to save profile.');
-                    statusDiv.style.color = 'red';
-                  }
-                } catch (error) {
-                  statusDiv.textContent = 'Error: ' + error.message;
-                  statusDiv.style.color = 'red';
-                }
-              });
-            }
-          });
         </script>
       </body>
     </html>
