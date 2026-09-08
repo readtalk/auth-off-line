@@ -24,7 +24,7 @@
 		"bindings": [
 			{
 				"name": "Authentication",
-				"class_name": "Authentication"
+				"class_name": "app_Chat"
 			}
 		]
 	},
