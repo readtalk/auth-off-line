@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>READTalk Messenger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html,
+        body {
+            height: 100dvh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8f8f8;
+            color: #1f2937;
+        }
+
+        body {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.75rem;
+            gap: 0.75rem;
+        }
+
+        .sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 1rem 1rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #000000;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .chat-item:hover {
+            background: #f3f4f6;
+        }
+
+        .chat-item.active {
+            background: #f3f4f6;
+        }
+
+        .chat-item .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #000000;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .chat-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-item .name {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .chat-item .last-msg {
+            font-size: 0.85rem;
+            color: #6b7280;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-item .time {
+            font-size: 0.7rem;
+            color: #6b7280;
+            flex-shrink: 0;
+        }
+
+        .chat-item .badge {
+            background: #000000;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .sidebar-footer .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #000000;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer .user-name {
+            font-weight: 500;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .chat-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #000000;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .chat-header .info {
+            flex: 1;
+        }
+
+        .chat-header .name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .chat-header .status {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .chat-header .menu-btn {
+            border: none;
+            background: transparent;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0.3rem 0.5rem;
+            border-radius: 8px;
+        }
+
+        .chat-header .menu-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 0.7rem 1rem;
+            border-radius: 16px;
+            background: #ffffff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user {
+            background: #cfcfcf;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-content {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 0 1rem 0.5rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-style: italic;
+            background: #f3f4f6;
+        }
+
+        .typing-indicator.visible {
+            display: block;
+        }
+
+        .message-input {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            background: white;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #000000;
+        }
+
+        #emoji-button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        #user-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            resize: none;
+            background: transparent;
+            font-size: 1rem;
+            font-family: inherit;
+            line-height: 1.5;
+            max-height: 120px;
+            overflow-y: hidden;
+            transition: height 0.1s ease;
+        }
+
+        #send-button {
+            width: 46px;
+            height: 46px;
+            flex-shrink: 0;
+            border: none;
+            border-radius: 50%;
+            background: #000000;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: background 0.2s;
+        }
+
+        #send-button:hover {
+            background: #2f2f2f;
+        }
+
+        #send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .emoji-picker {
+            position: absolute;
+            bottom: 5rem;
+            left: 1rem;
+            width: 280px;
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.3rem;
+            padding: 0.75rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            z-index: 999;
+        }
+
+        .emoji-picker.show {
+            display: grid;
+        }
+
+        .emoji-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.3rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: background 0.15s;
+        }
+
+        .emoji-item:hover {
+            background: #f3f4f6;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .sidebar {
+                width: 100%;
+                border-radius: 12px;
+                display: none;
+            }
+
+            .sidebar.active {
+                display: flex;
+                height: 100%;
+            }
+
+            .chat-container {
+                display: none;
+                border-radius: 12px;
+            }
+
+            .chat-container.active {
+                display: flex;
+                height: 100%;
+            }
+
+            .chat-header .back-btn {
+                display: flex !important;
+            }
+
+            .chat-header .back-btn {
+                display: none;
+                border: none;
+                background: transparent;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0.2rem 0.5rem;
+                border-radius: 8px;
+            }
+
+            .chat-header .back-btn:hover {
+                background: #f3f4f6;
+            }
+        }
+
+        .chat-header .back-btn {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar active" id="sidebar">
+        <div class="sidebar-header">
+            <h1>READTalk</h1>
+            <p>Anna Laura AI</p>
+        </div>
+        <div class="chat-list" id="chatList">
+            <div class="chat-item active" data-chat="laura">
+                <div class="avatar">A</div>
+                <div class="info">
+                    <div class="name">Anna Laura</div>
+                    <div class="last-msg">Hello! How can I help?</div>
+                </div>
+                <div class="time">10:30</div>
+                <div class="badge">3</div>
+            </div>
+            <div class="chat-item" data-chat="budi">
+                <div class="avatar">B</div>
+                <div class="info">
+                    <div class="name">Budi</div>
+                    <div class="last-msg">Ok, thanks!</div>
+                </div>
+                <div class="time">09:15</div>
+            </div>
+            <div class="chat-item" data-chat="citra">
+                <div class="avatar">C</div>
+                <div class="info">
+                    <div class="name">Citra</div>
+                    <div class="last-msg">See you tomorrow</div>
+                </div>
+                <div class="time">Yesterday</div>
+            </div>
+            <div class="chat-item" data-chat="doni">
+                <div class="avatar">D</div>
+                <div class="info">
+                    <div class="name">Doni</div>
+                    <div class="last-msg">I will send the file</div>
+                </div>
+                <div class="time">Yesterday</div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="avatar">R</div>
+                <div>
+                    <div class="user-name">User</div>
+                    <div style="font-size:0.75rem;">Online</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="chat-container active" id="chatView">
+        <div class="chat-header">
+            <button class="back-btn" id="backBtn">‹</button>
+            <div class="avatar">A</div>
+            <div class="info">
+                <div class="name" id="chatName">Anna Laura</div>
+                <div class="status">Online</div>
+            </div>
+            <button class="menu-btn">⋮</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message">
+                <div class="message-content">Hello! please my nickname is Laura, a virtual assistant for you. How can I help you today? 🙂</div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">💬 Laura typing...</div>
+
+        <div class="message-input">
+            <div class="input-wrapper">
+                <button id="emojiButton">🙂</button>
+                <textarea id="userInput" rows="1" placeholder="Message" autofocus></textarea>
+            </div>
+            <button id="sendButton">➤</button>
+            <div class="emoji-picker" id="emojiPicker">
+                <div class="emoji-item">😀</div><div class="emoji-item">😂</div><div class="emoji-item">🤣</div>
+                <div class="emoji-item">🙂</div><div class="emoji-item">😉</div><div class="emoji-item">😍</div>
+                <div class="emoji-item">🥰</div><div class="emoji-item">😘</div><div class="emoji-item">🤔</div>
+                <div class="emoji-item">😎</div><div class="emoji-item">🥳</div><div class="emoji-item">😭</div>
+                <div class="emoji-item">😡</div><div class="emoji-item">🔥</div><div class="emoji-item">💯</div>
+                <div class="emoji-item">✨</div><div class="emoji-item">❤️</div><div class="emoji-item">👍</div>
+                <div class="emoji-item">👏</div><div class="emoji-item">🙌</div><div class="emoji-item">🤝</div>
+                <div class="emoji-item">🎉</div><div class="emoji-item">⭐</div><div class="emoji-item">🌟</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            const sidebar = document.getElementById('sidebar');
+            const chatView = document.getElementById('chatView');
+            const backBtn = document.getElementById('backBtn');
+            const chatItems = document.querySelectorAll('.chat-item');
+            const chatName = document.getElementById('chatName');
+
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+
+            function openChat(name) {
+                if (isMobile()) {
+                    sidebar.classList.remove('active');
+                    chatView.classList.add('active');
+                }
+                chatName.textContent = name;
+            }
+
+            function goBack() {
+                if (isMobile()) {
+                    chatView.classList.remove('active');
+                    sidebar.classList.add('active');
+                }
+            }
+
+            chatItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const name = this.querySelector('.name')?.textContent || 'Chat';
+                    chatItems.forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    openChat(name);
+                });
+            });
+
+            if (backBtn) {
+                backBtn.addEventListener('click', goBack);
+            }
+
+            window.addEventListener('resize', function() {
+                if (!isMobile()) {
+                    sidebar.classList.add('active');
+                    chatView.classList.add('active');
+                } else {
+                    if (!chatView.classList.contains('active')) {
+                        sidebar.classList.add('active');
+                    }
+                }
+            });
+
+            if (!isMobile()) {
+                sidebar.classList.add('active');
+                chatView.classList.add('active');
+            } else {
+                sidebar.classList.add('active');
+                chatView.classList.remove('active');
+            }
+
+            const emojiButton = document.getElementById('emojiButton');
+            const emojiPicker = document.getElementById('emojiPicker');
+            const userInput = document.getElementById('userInput');
+            const sendButton = document.getElementById('sendButton');
+
+            if (userInput) {
+                userInput.addEventListener('input', function() {
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                });
+            }
+
+            if (emojiButton && emojiPicker) {
+                emojiButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    emojiPicker.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function() {
+                    emojiPicker.classList.remove('show');
+                });
+
+                emojiPicker.addEventListener('click', function(e) {
+                    const target = e.target.closest('.emoji-item');
+                    if (target) {
+                        const emoji = target.textContent;
+                        userInput.value += emoji;
+                        userInput.focus();
+                        emojiPicker.classList.remove('show');
+                    }
+                });
+            }
+
+            if (sendButton && userInput) {
+                sendButton.addEventListener('click', function() {
+                    const text = userInput.value.trim();
+                    if (!text) return;
+                    const messages = document.getElementById('chatMessages');
+                    const div = document.createElement('div');
+                    div.className = 'message user';
+                    div.innerHTML = '<div class="message-content">' + text + '</div>';
+                    messages.appendChild(div);
+                    userInput.value = '';
+                    messages.scrollTop = messages.scrollHeight;
+                });
+
+                userInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendButton.click();
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
