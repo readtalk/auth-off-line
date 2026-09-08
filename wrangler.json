@@ -20,14 +20,6 @@
 			"database_id": "6f7f17e5-74a6-46a1-a424-a1e5b0cb7284"
 		}
 	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "USER_ID",
-				"class_name": "userId"
-			}
-		]
-	},
 	"observability": {
 		"enabled": true
 	},
