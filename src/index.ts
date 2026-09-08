@@ -15,42 +15,13 @@ const subjects = createSubjects({
 	}),
 });
 
-export class userId implements DurableObject {
-	constructor(private state: DurableObjectState, private env: Env) {}
-
-	async fetch(request: Request): Promise<Response> {
-		const url = new URL(request.url);
-
-		if (request.method === "GET" && url.pathname === "/profile") {
-			const profile = await this.state.storage.get("profile");
-			return Response.json(profile || {});
-		}
-
-		if (request.method === "POST" && url.pathname === "/profile") {
-			const body = await request.json();
-			await this.state.storage.put("profile", body);
-			return Response.json({ success: true });
-		}
-
-		return new Response("userId DO", { status: 200 });
-	}
-}
-
 export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+	fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
 
 		if (url.pathname === "/dashboard") {
 			const userId = url.searchParams.get("user_id") || "user_123";
 			const email = url.searchParams.get("email") || "user@example.com";
-
-			if (userId) {
-				const id = env.USER_ID.idFromName(userId);
-				const stub = env.USER_ID.get(id);
-				const profileResponse = await stub.fetch("https://user-id/profile");
-				const profile = await profileResponse.json();
-			}
-
 			const html = DashboardHTML(userId, email);
 			return new Response(html, {
 				headers: { "Content-Type": "text/html" },
@@ -107,14 +78,6 @@ export default {
 			},
 			success: async (ctx, value) => {
 				const userId = await getOrCreateUser(env, value.email);
-
-				const id = env.USER_ID.idFromName(userId);
-				const stub = env.USER_ID.get(id);
-				await stub.fetch("https://user-id/profile", {
-					method: "POST",
-					body: JSON.stringify({ userId, email: value.email }),
-				});
-
 				const baseUrl = "https://global.readtalk.workers.dev";
 				return Response.redirect(
 					`${baseUrl}/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`,
