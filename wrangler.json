@@ -23,17 +23,11 @@
 	"durable_objects": {
 		"bindings": [
 			{
-				"class_name": "AUTHENTICATION",
-				"name": "Authentication"
+				"name": "Authentication",
+				"class_name": "Authentication"
 			}
 		]
 	},
-	"migrations": [
-		{
-			"new_sqlite_classes": ["Authentication"],
-			"tag": "v1"
-		}
-	],
 	"observability": {
 		"enabled": true
 	},
