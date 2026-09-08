@@ -15,6 +15,44 @@ const subjects = createSubjects({
 	}),
 });
 
+export class username implements DurableObject {
+	constructor(private state: DurableObjectState, private env: Env) {}
+
+	async fetch(request: Request): Promise<Response> {
+		const url = new URL(request.url);
+		const userId = url.searchParams.get("user_id");
+		const email = url.searchParams.get("email");
+
+		if (request.method === "POST" && url.pathname === "/profile") {
+			const body = await request.json() as { displayName?: string; username?: string };
+			const { displayName, username } = body;
+
+			if (!userId) {
+				return new Response("Missing user_id", { status: 400 });
+			}
+
+			await this.state.storage.put("profile", {
+				userId,
+				email,
+				displayName: displayName || "",
+				username: username || "",
+			});
+
+			return Response.json({ success: true, userId });
+		}
+
+		if (url.pathname === "/profile" && userId) {
+			const profile = await this.state.storage.get("profile");
+			if (!profile) {
+				return new Response("Profile not found", { status: 404 });
+			}
+			return Response.json(profile);
+		}
+
+		return new Response("username DO", { status: 200 });
+	}
+}
+
 export default {
 	fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
