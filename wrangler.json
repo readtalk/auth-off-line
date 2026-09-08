@@ -23,8 +23,8 @@
 	"durable_objects": {
 		"bindings": [
 			{
-				"name": "Authentication",
-				"class_name": "Chat"
+				"name": "USERNAME",
+				"class_name": "username"
 			}
 		]
 	},
