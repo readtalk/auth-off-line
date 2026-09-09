@@ -1,5 +1,5 @@
 import { issuer } from "@openauthjs/openauth";
-import type { Storage } from "@openauthjs/openauth/storage";
+import { CloudflareStorage } from "@openauthjs/openauth/storage/cloudflare";
 import { PasswordProvider } from "@openauthjs/openauth/provider/password";
 import { PasswordUI } from "@openauthjs/openauth/ui/password";
 import { createSubjects } from "@openauthjs/openauth/subject";
@@ -10,99 +10,75 @@ const subjects = createSubjects({
   user: object({ id: string() }),
 });
 
-// --- DO CLASS ---
-export class AuthStorage {
-  constructor(private state: DurableObjectState) {}
+// ========== DURABLE OBJECT BUAT CHAT ==========
+export class ChatRoom {
+  constructor(private state: DurableObjectState, private env: Env) {}
+
   async fetch(request: Request) {
     const url = new URL(request.url);
-    const key = url.searchParams.get("key") || "";
-    const prefix = url.searchParams.get("prefix") || "";
+    
+    if (url.pathname === "/history") {
+      const messages = await this.state.storage.get("messages") as any[] || [];
+      return Response.json(messages);
+    }
 
-    if (url.pathname === "/get") {
-      const val = await this.state.storage.get(key);
-      return Response.json(val?? null);
-    }
-    if (url.pathname === "/set") {
-      const { key: k, value } = await request.json() as any;
-      await this.state.storage.put(k, value);
+    if (request.method === "POST") {
+      const msg = await request.json() as any;
+      let messages = await this.state.storage.get("messages") as any[] || [];
+      messages.push({ ...msg, timestamp: Date.now() });
+      await this.state.storage.put("messages", messages);
       return Response.json({ ok: true });
     }
-    if (url.pathname === "/remove") {
-      await this.state.storage.delete(key);
-      return Response.json({ ok: true });
-    }
-    if (url.pathname === "/scan") {
-      const map = await this.state.storage.list({ prefix });
-      return Response.json([...map.keys()]);
-    }
-    return new Response("not found", { status: 404 });
+
+    return new Response("ChatRoom DO Active");
   }
 }
-
-// --- ADAPTER DO -> Storage ---
-function DOStorage(ns: DurableObjectNamespace): Storage {
-  const stub = () => ns.get(ns.idFromName("openauth-global"));
-  return {
-    get: async (key: string) => {
-      const res = await stub().fetch(`https://do/get?key=${encodeURIComponent(key)}`);
-      return (await res.json()) as any;
-    },
-    set: async (key: string, value: any, expiry?: any) => {
-      // expiry di-ignore di DO, tapi bisa ditambah logic kalau mau
-      await stub().fetch(`https://do/set`, {
-        method: "POST",
-        body: JSON.stringify({ key, value }),
-      });
-    },
-    remove: async (key: string) => {
-      await stub().fetch(`https://do/remove?key=${encodeURIComponent(key)}`);
-    },
-    scan: async (prefix: string) => {
-      const res = await stub().fetch(`https://do/scan?prefix=${encodeURIComponent(prefix)}`);
-      return (await res.json()) as string[];
-    },
-  };
-}
+// ==============================================
 
 export default {
-  fetch(request: Request, env: Env, ctx: ExecutionContext) {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+
+    // ROUTE CHAT KE DO
+    if (url.pathname.startsWith("/api/chat")) {
+      const id = env.CHAT_ROOM.idFromName("global-chat");
+      const stub = env.CHAT_ROOM.get(id);
+      return stub.fetch(request);
+    }
 
     if (url.pathname === "/dashboard") {
       const userId = url.searchParams.get("user_id") || "user_123";
       const email = url.searchParams.get("email") || "user@example.com";
-      const html = DashboardHTML(userId, email);
-      return new Response(html, { headers: { "Content-Type": "text/html" } });
-    }
-    if (url.pathname === "/logout") {
-      const response = Response.redirect("/");
-      response.headers.set("Set-Cookie", "session=; Max-Age=0; path=/");
-      return response;
-    }
-    if (url.pathname === "/") {
-      url.searchParams.set("redirect_uri", url.origin + "/dashboard");
-      url.searchParams.set("client_id", "your-client-id");
-      url.searchParams.set("response_type", "code");
-      url.pathname = "/authorize";
-      return Response.redirect(url.toString());
-    }
-    if (url.pathname === "/callback") {
-      return Response.json({
-        message: "OAuth flow complete!",
-        params: Object.fromEntries(url.searchParams.entries()),
+      return new Response(DashboardHTML(userId, email), {
+        headers: { "Content-Type": "text/html" },
       });
     }
 
+    if (url.pathname === "/logout") {
+      const res = Response.redirect(`${url.origin}/`, 302);
+      res.headers.set("Set-Cookie", "session=; Max-Age=0; path=/");
+      return res;
+    }
+
+    if (url.pathname === "/") {
+      url.searchParams.set("redirect_uri", `${url.origin}/dashboard`);
+      url.searchParams.set("client_id", "readtalk-web");
+      url.searchParams.set("response_type", "code");
+      url.pathname = "/authorize";
+      return Response.redirect(url.toString(), 302);
+    }
+
+    // AUTH PAKAI KV (TETAP)
     return issuer({
-      storage: DOStorage(env.AUTH_DO),
+      storage: CloudflareStorage({ namespace: env.AUTH_KV }),
       subjects,
       providers: {
         password: PasswordProvider(
           PasswordUI({
             sendCode: async (email, code) => {
-              console.log(`Sending code ${code} to ${email}`);
+              console.log(`Code ${code} for ${email}`);
             },
-            copy: { input_code: "Code (check Worker logs)" },
+            copy: { input_code: "Code (check logs)" },
           })
         ),
       },
@@ -117,11 +93,7 @@ export default {
       },
       success: async (ctx, value) => {
         const userId = await getOrCreateUser(env, value.email);
-        const baseUrl = "https://global.readtalk.workers.dev";
-        return Response.redirect(
-          `${baseUrl}/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`,
-          302
-        );
+        return ctx.subject("user", { id: userId });
       },
     }).fetch(request, env, ctx);
   },
@@ -129,11 +101,8 @@ export default {
 
 async function getOrCreateUser(env: Env, email: string): Promise<string> {
   const result = await env.AUTH_DB.prepare(
-    `INSERT INTO user (email) VALUES (?) ON CONFLICT (email) DO UPDATE SET email = email RETURNING id;`
-  )
-   .bind(email)
-   .first<{ id: string }>();
+    `INSERT INTO user (email) VALUES (?) ON CONFLICT(email) DO UPDATE SET email=excluded.email RETURNING id;`
+  ).bind(email).first<{ id: string }>();
   if (!result) throw new Error(`Unable to process user: ${email}`);
-  console.log(`Found or created user ${result.id} with email ${email}`);
   return result.id;
 }
