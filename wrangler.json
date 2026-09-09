@@ -1,31 +1,21 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "global",
+  "main": "src/index.ts",
   "compatibility_date": "2024-10-01",
   "compatibility_flags": ["nodejs_compat"],
-  "main": "src/index.ts",
-  "assets": {
-    "directory": "./public"
-  },
+  "assets": { "directory": "./public" },
+  "kv_namespaces": [
+    { "binding": "AUTH_KV", "id": "6ffcc61aed814e32b80e29c6fa5b44ee" }
+  ],
+  "d1_databases": [
+    { "binding": "AUTH_DB", "database_name": "to-trust", "database_id": "6ffcc61aed814e32b80e29c6fa5b44ee" }
+  ],
   "durable_objects": {
     "bindings": [
-      {
-        "name": "AUTH_DO",
-        "class_name": "AuthStorage"
-      }
+      { "name": "CHAT_ROOM", "class_name": "ChatRoom" }
     ]
   },
   "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["AuthStorage"]
-    }
-  ],
-  "d1_databases": [
-    {
-      "binding": "AUTH_DB",
-      "database_name": "to-trust",
-      "database_id": "6f7f17e5-74a6-46a1-a424-a1e5b0cb7284"
-    }
+    { "tag": "v1", "new_sqlite_classes": ["ChatRoom"] }
   ]
 }
