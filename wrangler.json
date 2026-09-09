@@ -1,21 +1,18 @@
 {
   "name": "global",
-  "main": "src/server/index.ts",
+  "main": "src/index.ts",
   "compatibility_date": "2024-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "directory": "./public" },
   "kv_namespaces": [
     { "binding": "AUTH_KV", "id": "6ffcc61aed814e32b80e29c6fa5b44ee" }
   ],
-  "d1_databases": [
-    { "binding": "AUTH_DB", "database_name": "to-trust", "database_id": "ID_D1_ASLI_LU" }
-  ],
   "durable_objects": {
     "bindings": [
-      { "name": "Chat", "class_name": "Chat" }
+      { "name": "AUTH_DO", "class_name": "AUTH_DO" }
     ]
   },
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["Chat"] }
+    { "tag": "v1", "new_sqlite_classes": ["AUTH_DO"] }
   ]
 }
