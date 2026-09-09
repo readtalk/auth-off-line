@@ -1,3 +1,49 @@
+// ===== CHAT DO (PartyServer) - JANGAN DIUBAH =====
+import { type Connection, Server, type WSMessage, routePartykitRequest } from "partyserver";
+import type { ChatMessage, Message } from "../shared";
+
+export class Chat extends Server<Env> {
+  static options = { hibernate: true };
+  messages = [] as ChatMessage[];
+
+  broadcastMessage(message: Message, exclude?: string[]) {
+    this.broadcast(JSON.stringify(message), exclude);
+  }
+
+  onStart() {
+    this.ctx.storage.sql.exec(
+      `CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, user TEXT, role TEXT, content TEXT)`
+    );
+    this.messages = this.ctx.storage.sql.exec(`SELECT * FROM messages`).toArray() as ChatMessage[];
+  }
+
+  onConnect(connection: Connection) {
+    connection.send(JSON.stringify({ type: "all", messages: this.messages } satisfies Message));
+  }
+
+  saveMessage(message: ChatMessage) {
+    const existing = this.messages.find((m) => m.id === message.id);
+    if (existing) {
+      this.messages = this.messages.map((m) => m.id === message.id ? message : m);
+    } else {
+      this.messages.push(message);
+    }
+    this.ctx.storage.sql.exec(
+      `INSERT INTO messages (id, user, role, content) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET content = ?`,
+      message.id, message.user, message.role, message.content, message.content
+    );
+  }
+
+  onMessage(connection: Connection, message: WSMessage) {
+    this.broadcast(message as string);
+    const parsed = JSON.parse(message as string) as Message;
+    if (parsed.type === "add" || parsed.type === "update") {
+      this.saveMessage(parsed);
+    }
+  }
+}
+
+// ===== OPENAUTH - SISTEM BAWAAN GAK DIUBAH =====
 import { issuer } from "@openauthjs/openauth";
 import { CloudflareStorage, type CloudflareStorageOptions } from "@openauthjs/openauth/storage/cloudflare";
 import { PasswordProvider } from "@openauthjs/openauth/provider/password";
@@ -8,37 +54,21 @@ import { DashboardHTML } from "./dashboard";
 
 const subjects = createSubjects({ user: object({ id: string() }) });
 
-// DO TAMBAHAN - GAK NYENTUH KV
-export class AUTH_DO {
-  constructor(private state: DurableObjectState) {}
-  async fetch(request: Request) {
-    if (request.method === "POST") {
-      const { userId, email, profile } = await request.json() as any;
-      const existing = await this.state.storage.get("profile") as any;
-      if (!existing) {
-        // PESAN PERTAMA = PROFILE ROOM
-        await this.state.storage.put("profile", { userId, email, ...profile });
-        await this.state.storage.put("messages", [
-          { from: "system", text: `Room created for ${email}`, at: Date.now() }
-        ]);
-      }
-      return Response.json({ ok: true });
-    }
-    const profile = await this.state.storage.get("profile");
-    const messages = await this.state.storage.get("messages");
-    return Response.json({ profile, messages });
-  }
-}
-
 export default {
-  fetch(request: Request, env: Env, ctx: ExecutionContext) {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+
+    // 1. CEK DULU: INI REQUEST CHAT (PARTYKIT) ATAU AUTH?
+    // Kalau /parties /party /room = lempar ke Chat DO
+    if (url.pathname.startsWith("/parties") || url.pathname.startsWith("/party")) {
+      return (await routePartykitRequest(request, { ...env } as any)) || new Response("Not found", { status: 404 });
+    }
+
+    // 2. KALO BUKAN CHAT, JALANIN OA BAWAAN LU - GAK DIUBAH
     if (url.pathname === "/dashboard") {
       const userId = url.searchParams.get("user_id") || "user_123";
       const email = url.searchParams.get("email") || "user@example.com";
-      return new Response(DashboardHTML(userId, email), {
-        headers: { "Content-Type": "text/html" },
-      });
+      return new Response(DashboardHTML(userId, email), { headers: { "Content-Type": "text/html" } });
     }
     if (url.pathname === "/logout") {
       const r = Response.redirect("/");
@@ -56,7 +86,7 @@ export default {
       return Response.json({ message: "OAuth flow complete!", params: Object.fromEntries(url.searchParams.entries()) });
     }
 
-    // OPENAUTH TETAP PAKAI KV - SAMA PERSIS KAYA PUNYA LU
+    // OA TETAP PAKAI AUTH_KV
     return issuer({
       storage: CloudflareStorage({ namespace: env.AUTH_KV as CloudflareStorageOptions["namespace"] }),
       subjects,
@@ -76,22 +106,8 @@ export default {
           light: "https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/brand.png",
         },
       },
-      // DISINI STATE JADI PROFILE ROOM
       success: async (ctx, value) => {
         const userId = await getOrCreateUser(env, value.email);
-        
-        // TAMBAHAN DOANG: bikin profile room + pesan pertama, gak ganggu redirect
-        try {
-          const roomId = env.AUTH_DO.idFromName(userId);
-          const room = env.AUTH_DO.get(roomId);
-          ctx.waitUntil(
-            room.fetch(new Request("https://do/", {
-              method: "POST",
-              body: JSON.stringify({ userId, email: value.email, profile: { id: userId, email: value.email } })
-            }))
-          );
-        } catch {}
-
         const baseUrl = "https://global.readtalk.workers.dev";
         return Response.redirect(`${baseUrl}/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`, 302);
       },
