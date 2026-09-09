@@ -3,7 +3,7 @@
 // Runtime types generated with workerd@1.20260826.1 2025-10-08 nodejs_compat
 interface __BaseEnv_Env {
 	AUTH_KV: KVNamespace;
-	AUTH_DB: D1Database;
+	AUTH_DO: D1Database;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
