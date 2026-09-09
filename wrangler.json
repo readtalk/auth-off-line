@@ -12,10 +12,10 @@
   ],
   "durable_objects": {
     "bindings": [
-      { "name": "AUTH_DO", "class_name": "authentication" }
+      { "name": "AUTH_DO", "class_name": "profile" }
     ]
   },
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["authentication"] }
+    { "tag": "v1", "new_sqlite_classes": ["profile"] }
   ]
 }
