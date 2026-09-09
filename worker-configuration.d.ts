@@ -4,7 +4,6 @@
 interface Env {
   AUTH_KV: KVNamespace;
   AUTH_DO: DurableObjectNamespace;
-  ASSETS: Fetcher;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
