@@ -8,22 +8,24 @@ import { DashboardHTML } from "./dashboard";
 
 const subjects = createSubjects({ user: object({ id: string() }) });
 
-// ===== INI AUTH_DO - BUAT PROFILE ROOM =====
+// INI DO PENGGANTI D1
 export class AUTH_DO {
   constructor(private state: DurableObjectState) {}
   async fetch(request: Request) {
+    const url = new URL(request.url);
     if (request.method === "POST") {
-      const data = await request.json() as any;
-      await this.state.storage.put("profile", data);
-      await this.state.storage.put("messages", [{ from: "system", text: `Room created for ${data.email}`, at: Date.now() }]);
-      return Response.json({ ok: true });
+      const { email } = await request.json() as any;
+      let user = await this.state.storage.get(`user:${email}`) as any;
+      if (!user) {
+        user = { id: `user_${crypto.randomUUID()}`, email, createdAt: Date.now() };
+        await this.state.storage.put(`user:${email}`, user);
+        await this.state.storage.put(`profile:${user.id}`, { id: user.id, email, messages: [{ from: "system", text: `Room created for ${email}` }] });
+      }
+      return Response.json(user);
     }
-    const profile = await this.state.storage.get("profile");
-    const messages = await this.state.storage.get("messages");
-    return Response.json({ profile, messages });
+    return Response.json(null);
   }
 }
-// ============================================
 
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext) {
@@ -45,12 +47,10 @@ export default {
     if (url.pathname === "/callback") {
       return Response.json({ message: "OAuth flow complete!", params: Object.fromEntries(url.searchParams.entries()) });
     }
-
-    // BAWAAN OA TETAP PAKAI KV
     return issuer({
       storage: CloudflareStorage({ namespace: env.AUTH_KV as CloudflareStorageOptions["namespace"] }),
       subjects,
-      providers: { password: PasswordProvider(PasswordUI({ sendCode: async (email, code) => console.log(`Code ${code} to ${email}`), copy: { input_code: "Code (check logs)" } })) },
+      providers: { password: PasswordProvider(PasswordUI({ sendCode: async (email, code) => console.log(`Code ${code} to ${email}`), copy: { input_code: "Code (check Worker logs)" } })) },
       theme: {
         title: "READTalk Messenger", primary: "#FF0000",
         favicon: "https://raw.githubusercontent.com/readtalk/global/refs/heads/main/public/favicon.ico",
@@ -58,12 +58,6 @@ export default {
       },
       success: async (ctx, value) => {
         const userId = await getOrCreateUser(env, value.email);
-        // TAMBAHAN: PAKAI AUTH_DO BUAT BIKIN PROFILE ROOM
-        try {
-          const id = env.AUTH_DO.idFromName(userId);
-          const stub = env.AUTH_DO.get(id);
-          ctx.waitUntil(stub.fetch(new Request("https://do/", { method: "POST", body: JSON.stringify({ userId, email: value.email }) })));
-        } catch {}
         const baseUrl = "https://global.readtalk.workers.dev";
         return Response.redirect(`${baseUrl}/dashboard?user_id=${userId}&email=${encodeURIComponent(value.email)}`, 302);
       },
@@ -71,8 +65,12 @@ export default {
   },
 } satisfies ExportedHandler<Env>;
 
+// INI YANG TADINYA PAKAI D1, SEKARANG PAKAI AUTH_DO
 async function getOrCreateUser(env: Env, email: string): Promise<string> {
-  const result = await env.AUTH_DB.prepare(`INSERT INTO user (email) VALUES (?) ON CONFLICT (email) DO UPDATE SET email = email RETURNING id;`).bind(email).first<{ id: string }>();
-  if (!result) throw new Error(`Unable to process user: ${email}`);
-  return result.id;
+  const dbId = env.AUTH_DO.idFromName("global-user-db");
+  const stub = env.AUTH_DO.get(dbId);
+  const res = await stub.fetch(new Request("https://do/", { method: "POST", body: JSON.stringify({ email }) }));
+  const user = await res.json() as { id: string };
+  console.log(`Found or created user ${user.id} with email ${email} via AUTH_DO`);
+  return user.id;
 }
