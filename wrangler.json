@@ -18,7 +18,7 @@
   "migrations": [
     {
       "tag": "v1",
-      "new_classes": ["AuthStorage"]
+      "new_sqlite_classes": ["AuthStorage"]
     }
   ],
   "d1_databases": [
